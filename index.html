@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ling.com · 液态玻璃应用工作室</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    min-height: 100vh;
+    color: #24598f;
+    background: linear-gradient(160deg, #eaf6ff 0%, #cfeafc 40%, #b7ddfa 100%);
+    overflow-x: hidden;
+  }
+
+  /* 背景漂浮光斑 */
+  .blob { position: fixed; border-radius: 50%; filter: blur(70px); opacity: .55; z-index: 0; pointer-events: none; }
+  .b1 { width: 46vw; height: 46vw; left: -12vw; top: -10vh; background: #9ed8ff; }
+  .b2 { width: 38vw; height: 38vw; right: -10vw; top: 22vh; background: #bff0dd; }
+  .b3 { width: 42vw; height: 42vw; left: 18vw; bottom: -14vh; background: #ffc9d6; opacity: .4; }
+
+  .wrap { position: relative; z-index: 1; max-width: 1020px; margin: 0 auto; padding: 48px 22px 60px; }
+
+  /* 液态玻璃面板 */
+  .glass {
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.34));
+    backdrop-filter: blur(26px) saturate(170%);
+    -webkit-backdrop-filter: blur(26px) saturate(170%);
+    border: 1px solid rgba(255,255,255,.75);
+    border-radius: 26px;
+    box-shadow: 0 18px 50px rgba(36,89,143,.14), inset 0 1px 0 rgba(255,255,255,.9);
+    overflow: hidden;
+  }
+  .glass::before {
+    content: ""; position: absolute; left: 2px; right: 2px; top: 2px; height: 34%;
+    border-radius: 24px 24px 40px 40px;
+    background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0));
+    pointer-events: none;
+  }
+
+  /* 顶栏 */
+  header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 34px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-badge {
+    width: 58px; height: 58px; border-radius: 19px; display: grid; place-items: center;
+    font-size: 30px; font-weight: 800; color: #fff;
+    background: linear-gradient(180deg, #8cc8ff, #4d9be8);
+    border: 1.5px solid rgba(255,255,255,.8);
+    box-shadow: 0 10px 24px rgba(77,155,232,.4), inset 0 2px 3px rgba(255,255,255,.7);
+    text-shadow: 0 1px 2px rgba(0,0,0,.15);
+  }
+  .brand h1 { font-size: 26px; color: #24598f; letter-spacing: .5px; }
+  .brand small { display: block; font-size: 12px; color: rgba(53,91,133,.72); font-weight: 400; margin-top: 2px; }
+  .ling-pill {
+    padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #35629e;
+    background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.8);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+
+  .hero { padding: 40px 34px; text-align: center; margin-bottom: 20px; }
+  .hero h2 { font-size: clamp(26px, 5vw, 40px); color: #24598f; margin-bottom: 12px; }
+  .hero p { font-size: 15px; color: rgba(53,91,133,.8); line-height: 1.8; }
+
+  /* 系统筛选器 */
+  .os-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 26px; }
+  .os-chip {
+    padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    color: #35629e; cursor: pointer; user-select: none;
+    background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.8);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    transition: all .15s ease;
+  }
+  .os-chip:hover { transform: translateY(-1px); }
+  .os-chip.on {
+    color: #fff; border-color: rgba(255,255,255,.85);
+    background: linear-gradient(180deg, #8cc8ff, #4d9be8);
+    box-shadow: 0 8px 20px rgba(77,155,232,.4), inset 0 2px 3px rgba(255,255,255,.6);
+  }
+  .app.hide-os { display: none; }
+
+  .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 26px; }
+
+  .app { padding: 30px 26px; display: flex; flex-direction: column; }
+  .app-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .app-icon { width: 74px; height: 74px; border-radius: 23px; display: grid; place-items: center;
+    font-size: 38px; font-weight: 800; color: #fff; flex: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,.18); }
+  .icon-mico { background: linear-gradient(180deg, #9ed2ff, #4d9be8);
+    border: 1.5px solid rgba(255,255,255,.85);
+    box-shadow: 0 10px 26px rgba(77,155,232,.45), inset 0 2px 4px rgba(255,255,255,.75); }
+  .icon-xfs { background: linear-gradient(180deg, #ff8a80, #e5484d);
+    border: 1.5px solid rgba(255,255,255,.85);
+    box-shadow: 0 10px 26px rgba(229,72,77,.4), inset 0 2px 4px rgba(255,255,255,.55); }
+  .icon-shg { background: linear-gradient(180deg, #ffd540, #ff5630);
+    border: 1.5px solid rgba(255,255,255,.85);
+    box-shadow: 0 10px 26px rgba(255,86,48,.4), inset 0 2px 4px rgba(255,255,255,.55); }
+  .icon-zlt { background: linear-gradient(180deg, #3cc3ff, #0e86d8);
+    border: 1.5px solid rgba(255,255,255,.85);
+    box-shadow: 0 10px 26px rgba(14,134,216,.4), inset 0 2px 4px rgba(255,255,255,.55); }
+  .app-head h3 { font-size: 21px; color: #24598f; }
+  .app-head p { font-size: 12.5px; color: rgba(53,91,133,.72); margin-top: 3px; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+  .tag { font-size: 12px; padding: 5px 12px; border-radius: 999px; color: #35629e;
+    background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.8); }
+  .tag.hot { color: #b3261e; background: rgba(255,226,224,.6); }
+  .tag.cool { color: #1f6b37; background: rgba(219,243,228,.6); }
+
+  .feat { list-style: none; flex: 1; }
+  .feat li { font-size: 13.5px; color: rgba(36,89,143,.92); padding: 6px 0 6px 24px; position: relative; line-height: 1.5; }
+  .feat li::before { content: "◆"; position: absolute; left: 2px; font-size: 11px; color: #6fb2ec; }
+
+  .dl {
+    margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 18px; border-radius: 18px; text-decoration: none;
+    font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 1px;
+    background: linear-gradient(180deg, #8cc8ff, #4d9be8);
+    border: 1.5px solid rgba(255,255,255,.75);
+    box-shadow: 0 10px 24px rgba(77,155,232,.4), inset 0 2px 3px rgba(255,255,255,.6);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .dl:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(77,155,232,.5), inset 0 2px 3px rgba(255,255,255,.6); }
+  .dl.red { background: linear-gradient(180deg, #ff9a8f, #e53935); box-shadow: 0 10px 24px rgba(229,57,53,.38), inset 0 2px 3px rgba(255,255,255,.5); }
+  .dl small { font-weight: 400; opacity: .85; }
+
+  footer { text-align: center; margin-top: 40px; font-size: 12px; color: rgba(53,91,133,.55); }
+
+  @media (max-width: 560px) {
+    .wrap { padding-top: 34px; }
+    .hero { padding: 30px 20px; }
+    .app { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-badge">零</div>
+        <div>
+          <h1>ling 工作室</h1>
+          <small>液态玻璃 · 手机工具应用</small>
+        </div>
+      </div>
+      <div class="ling-pill">🌐 ling.com</div>
+    </header>
+
+    <section class="glass hero">
+      <h2>四款应用,同样的玻璃质感</h2>
+      <p>终端杀毒、木马拦截卫士、危险脚本清除器、整蛊工具箱。<br>
+      轻盈 · 透亮 · 液态玻璃设计语言。</p>
+    </section>
+
+    <div class="os-bar" id="osBar">
+      <div class="os-chip on" data-os="all">全部</div>
+      <div class="os-chip" data-os="android">🤖 安卓</div>
+      <div class="os-chip" data-os="harmony">🌐 鸿蒙</div>
+      <div class="os-chip" data-os="windows">🖥 Windows</div>
+      <div class="os-chip" data-os="linux">🐧 Linux</div>
+      <div class="os-chip" data-os="ios">📱 iOS</div>
+    </div>
+
+    <div class="apps">
+      <!-- mico -->
+      <section class="glass app" data-os="android harmony linux">
+        <div class="app-head">
+          <div class="app-icon icon-mico">零</div>
+          <div>
+            <h3>mico · 木马拦截卫士</h3>
+            <p>com.raybox.mico · v1.8 · Android 7.0+</p>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag cool">🛡 音量减键拦截</span>
+          <span class="tag hot">⚠ 高危自动弹窗</span>
+          <span class="tag cool">❄ 冻结 / 🗑 删除</span>
+          <span class="tag">📦 应用扫描</span>
+          <span class="tag">📖 防护日记</span>
+          <span class="tag">🤍 风险白名单</span>
+          <span class="tag">⚡ Shizuku 极强模式</span>
+        </div>
+        <ul class="feat">
+          <li>任何界面按音量减键,立刻弹出液态玻璃拦截窗</li>
+          <li>高危应用一打开自动弹窗,一键「开启防护」冻结木马</li>
+          <li>模式2 搭配 Shizuku:suspend 真冻结 + 免确认卸载</li>
+          <li>全盘扫描按风险排序,权限明细一目了然</li>
+          <li>防护日记记录每一次拦截、冻结与删除</li>
+        </ul>
+        <a class="dl" href="download/Mico.apk" download>⬇ 下载 mico <small>(217 KB)</small></a>
+      </section>
+
+      <!-- 小小欺负分身 -->
+      <section class="glass app" data-os="android harmony linux">
+        <div class="app-head">
+          <div class="app-icon icon-xfs">小</div>
+          <div>
+            <h3>小小欺负分身 · 工具箱</h3>
+            <p>com.raybox.tools · Android 5.0+</p>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag hot">🔊 音量减 3 连击清后台</span>
+          <span class="tag">🛡 防诈骗来电</span>
+          <span class="tag">⏭ 自动跳过开屏广告</span>
+          <span class="tag">🐉 桌面宠物</span>
+          <span class="tag">◍ 悬浮球</span>
+          <span class="tag">⌨ 终端</span>
+          <span class="tag">📊 性能检测</span>
+          <span class="tag">🎮 120Hz 游戏模式</span>
+        </div>
+        <ul class="feat">
+          <li>3 秒内 3 次音量减,清空全部后台「拿下拿下」</li>
+          <li>骚扰/虚拟运营商来电自动警告,可自动挂断</li>
+          <li>液态玻璃设置页,模糊强度与折射高度可调</li>
+          <li>小龙虾小游戏、金龙 AI、奶蛙爆笑板块</li>
+          <li>应用扫描、APK 检测、ADB 工具一应俱全</li>
+        </ul>
+        <a class="dl red" href="download/XiaoFenShen.apk" download>⬇ 下载 小小欺负分身 <small>(2.1 MB)</small></a>
+      </section>
+
+      <!-- sh守卫 -->
+      <section class="glass app" data-os="android harmony linux">
+        <div class="app-head">
+          <div class="app-icon icon-shg">sh</div>
+          <div>
+            <h3>sh守卫 · 危险脚本清除器</h3>
+            <p>com.raybox.shguard · v1.7 · Android 7.0+</p>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag hot">🔥 运行即清除活动危险 sh</span>
+          <span class="tag cool">⟳ 后台 30 秒一巡</span>
+          <span class="tag">🛡 普通/极强双模式</span>
+          <span class="tag">🌐 全盘扫描</span>
+          <span class="tag">🧪 一键生成测试样本</span>
+        </div>
+        <ul class="feat">
+          <li>打开即扫,危险脚本当场杀进程+删文件</li>
+          <li>普通模式无需 Shizuku:「所有文件访问」即可扫全存储</li>
+          <li>极强拦截搭配 Shizuku:系统全位置+运行进程,真冻结</li>
+          <li>无障碍保活,划掉后台依然守护</li>
+          <li>内置无害测试样本生成器,随时验收</li>
+        </ul>
+        <a class="dl" href="download/ShGuard.apk" download style="background:linear-gradient(180deg,#ffd540,#ff7a45);box-shadow:0 10px 24px rgba(255,122,69,.4),inset 0 2px 3px rgba(255,255,255,.55)">⬇ 下载 sh守卫 <small>(185 KB)</small></a>
+      </section>
+
+      <!-- zerolockterm -->
+      <section class="glass app" data-os="android harmony linux">
+        <div class="app-head">
+          <div class="app-icon icon-zlt">🛡</div>
+          <div>
+            <h3>zerolockterm · 终端杀毒</h3>
+            <p>com.raybox.zerolockterm · v4.1 · Android 7.0+</p>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag hot">🔊 触发键/次数可选拦截</span>
+          <span class="tag hot">⚠ 高危自动防护</span>
+          <span class="tag cool">🧬 深度查杀(脚本+APK+注入)</span>
+          <span class="tag">🤖 AI 助手(GLM联网)</span>
+          <span class="tag">🎮 AI 视觉代打</span>
+          <span class="tag">🎨 六套主题色</span>
+        </div>
+        <ul class="feat">
+          <li>五种拦截模式,系统应用/白名单永不误伤</li>
+          <li>Shizuku/Root 双通道:force-stop + suspend 真冻结</li>
+          <li>安装监控、环境自检、一键体检、防护日记导出</li>
+          <li>GLM 大模型问答 + 说「打开微信」直启应用</li>
+          <li>AI 看屏代打游戏(豆包同款思路)</li>
+        </ul>
+        <a class="dl" href="download/ZeroLockTerm.apk" download style="background:linear-gradient(180deg,#3cc3ff,#0e86d8);box-shadow:0 10px 24px rgba(14,134,216,.4),inset 0 2px 3px rgba(255,255,255,.55)">⬇ 下载 zerolockterm <small>(225 KB)</small></a>
+      </section>
+    </div>
+
+    <footer>ling.com © 2026 · 液态玻璃设计 · 本站直接提供 APK 下载</footer>
+  </div>
+
+<script>
+  var chips = document.querySelectorAll('.os-chip');
+  var cards = document.querySelectorAll('.apps .app');
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () {
+      chips.forEach(function (x) { x.classList.remove('on'); });
+      c.classList.add('on');
+      var os = c.getAttribute('data-os');
+      cards.forEach(function (card) {
+        var ok = os === 'all' || (card.getAttribute('data-os') || '').indexOf(os) >= 0;
+        card.classList.toggle('hide-os', !ok);
+      });
+    });
+  });
+</script>
+</body>
+</html>
